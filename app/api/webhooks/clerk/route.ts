@@ -1,9 +1,8 @@
-/* eslint-disable camelcase */
-import { clerkClient } from "@clerk/nextjs";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
+import { users } from "@clerk/clerk-sdk-node"; // Import Clerk's server-side SDK
 
 import { createUser, deleteUser, updateUser } from "@/lib/actions/user.actions";
 
@@ -25,7 +24,7 @@ export async function POST(req: Request) {
 
 	// If there are no headers, error out
 	if (!svix_id || !svix_timestamp || !svix_signature) {
-		return new Response("Error occured -- no svix headers", {
+		return new Response("Error occurred -- no svix headers", {
 			status: 400,
 		});
 	}
@@ -48,7 +47,7 @@ export async function POST(req: Request) {
 		}) as WebhookEvent;
 	} catch (err) {
 		console.error("Error verifying webhook:", err);
-		return new Response("Error occured", {
+		return new Response("Error occurred", {
 			status: 400,
 		});
 	}
@@ -73,9 +72,9 @@ export async function POST(req: Request) {
 
 		const newUser = await createUser(user);
 
-		// Set public metadata
+		// Set public metadata using Clerk's server-side SDK
 		if (newUser) {
-			await clerkClient.users.updateUserMetadata(id, {
+			await users.updateUser(id, {
 				publicMetadata: {
 					userId: newUser._id,
 				},
@@ -110,7 +109,7 @@ export async function POST(req: Request) {
 		return NextResponse.json({ message: "OK", user: deletedUser });
 	}
 
-	console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
+	console.log(`Webhook with an ID of ${id} and type of ${eventType}`);
 	console.log("Webhook body:", body);
 
 	return new Response("", { status: 200 });
